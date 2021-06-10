@@ -25,6 +25,7 @@ import fileinput
 import subprocess
 import fnmatch
 import unittest
+import uuid
 
 #sphinx-argparse is a delight.
 try:
@@ -244,8 +245,7 @@ def get_init_parser():
     parser.add_argument('--config-bucket-exists-in-another-account', required=False, action='store_true', help='[optional] If the Config bucket exists in another account, remove the check of the bucket')
     parser.add_argument('--skip-code-bucket-creation', required=False, action='store_true', help='[optional] If you want to use custom code bucket for rdk, enable this and use flag --custom-code-bucket to "rdk deploy"')
     parser.add_argument('--control-tower', required=False, action='store_true', help='[optional] If your account is part of an AWS Control Tower setup --control-tower will skip the setup of configuration_recorder and delivery_channel')
-    parser.add_argument('-l','--lambda-layer', required=False, action='store_true', help='[optional] Forces an update to the rdklib-layer in the region. If no rdklib-layer exists in this region then "rdk init" will automatically deploy one')
-
+    parser.add_argument('-l', '--lambda-layer', required=False, action='store_true', help='[optional] Forces an update to the rdklib-layer in the region. If no rdklib-layer exists in this region then "rdk init" will automatically deploy one')
 
     return parser
 
@@ -462,6 +462,17 @@ class rdk:
             print("This account is part of an AWS Control Tower managed organization. Playing nicely with it")
             control_tower = True
 
+        lambda_layer_version = self.__get_existing_lambda_layer(my_session)
+        if lambda_layer_version:
+            print("Found Version: " + lambda_layer_version)
+
+        if self.args.lambda_layer or not lambda_layer_version:
+            if self.args.lambda_layer:
+                print(f"--lambda-layer Flag received, forcing update of the Lambda Layer in {my_session.region_name}")
+            else:
+                print(f"Lambda Layer not found in {my_session.region_name}. Creating one now")
+            lambda_layer_version = self.__create_new_lambda_layer(my_session)
+        exit()
         #Check to see if the ConfigRecorder has been created.
         recorders = my_config.describe_configuration_recorders()
         if len(recorders['ConfigurationRecorders']) > 0:
@@ -3093,6 +3104,70 @@ class rdk:
         )
         return response
 
+    def __get_existing_lambda_layer(self, session):
+        lambda_client = session.client("lambda")
+        print("Checking for Existing RDK Layer")
+        response = lambda_client.list_layer_versions(LayerName="rdklib-layer")
+        if response["LayerVersions"]:
+            return response['LayerVersions'][0]['LayerVersionArn']
+        elif not response["LayerVersions"]:
+            return None
+
+    def __create_new_lambda_layer(self, session):
+        print("Creating new rdklib-layer")
+        folder_name = "lib" + str(uuid.uuid4())
+        shell_command = "pip3 install --target ./python boto3 botocore rdk rdklib"
+        region = session.region_name
+
+        print(f"Installing Packages to {folder_name}/python")
+        try:
+            os.makedirs(folder_name + "/python")
+        except FileExistsError as e:
+            print(e)
+            sys.exit(1)
+        os.chdir(folder_name)
+        ret = subprocess.run(shell_command, capture_output=True, shell=True)
+
+        print("Creating rdk_lib_layer.zip")
+        shutil.make_archive("rdk_lib_layer", "zip", "python")
+        os.chdir("..")
+
+        s3_client = session.client('s3')
+        s3_resource = session.resource('s3')
+
+        print("Creating temporary S3 Bucket")
+        bucket_name = "rdkliblayertemp" + str(uuid.uuid4())
+        if region != "us-east-1":
+            s3_client.create_bucket(
+                Bucket=bucket_name, CreateBucketConfiguration={"LocationConstraint": region}
+            )
+        if region == "us-east-1":
+            s3_client.create_bucket(Bucket=bucket_name)
+
+        print("Uploading rdk_lib_layer.zip to S3")
+        s3_resource.Bucket(bucket_name).upload_file(
+            f"{folder_name}/rdk_lib_layer.zip", "rdklib-layer"
+        )
+
+        lambda_client = session.client("lambda")
+
+        print("Publishing Lambda Layer")
+        lambda_client.publish_layer_version(
+            LayerName="rdklib-layer",
+            Content={"S3Bucket": bucket_name, "S3Key": "rdklib-layer"},
+            CompatibleRuntimes=["python3.6", "python3.7", "python3.8"],
+        )
+
+        print("Deleting temporary S3 Bucket")
+        try:
+            bucket = s3_resource.Bucket(bucket_name)
+            bucket.objects.all().delete()
+            bucket.delete()
+        except Exception as e:
+            print(e)
+
+        print("Cleaning up temp_folder")
+        shutil.rmtree(f"./{folder_name}")
 class TestCI():
     def __init__(self, ci_type):
         #convert ci_type string to filename format
