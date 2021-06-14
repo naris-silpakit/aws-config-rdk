@@ -1356,12 +1356,10 @@ class rdk:
             layers = []
             if 'SourceRuntime' in rule_params:
                 if rule_params['SourceRuntime'] == "python3.6-lib":
-                    if self.args.rdklib_layer_arn:
-                        layers.append(self.args.rdklib_layer_arn)
-                    else:
-                        rdk_lib_version = RDKLIB_LAYER_VERSION[my_session.region_name]
-                        rdklib_arn = RDKLIB_ARN_STRING.format(region=my_session.region_name, version=rdk_lib_version)
-                        layers.append(rdklib_arn)
+                    print("Here")
+                    existing_layer_arn = self.__get_existing_lambda_layer()
+                    if existing_layer_arn:
+                        layers.append(existing_layer_arn)
 
 
             if self.args.lambda_layers:
@@ -1538,14 +1536,10 @@ class rdk:
             rdk_lib_version = "0"
             if 'SourceRuntime' in rule_params:
                 if rule_params['SourceRuntime'] == "python3.6-lib":
-                    if self.args.rdklib_layer_arn:
-                        layers.append(self.args.rdklib_layer_arn)
-                    else:
-                        #create custom session based on whatever credentials are available to us
-                        my_session = self.__get_boto_session()
-                        rdk_lib_version = RDKLIB_LAYER_VERSION[my_session.region_name]
-                        rdklib_arn = RDKLIB_ARN_STRING.format(region=my_session.region_name, version=rdk_lib_version)
-                        layers.append(rdklib_arn)
+                    print("Here")
+                    existing_layer_arn = self.__get_existing_lambda_layer()
+                    if existing_layer_arn:
+                        layers.append(existing_layer_arn)
 
             if self.args.lambda_layers:
                 additional_layers = self.args.lambda_layers.split(',')
@@ -3070,8 +3064,10 @@ class rdk:
                     "SubnetIds" : self.args.lambda_subnets.split(",")
                 }
             layers = []
-            if self.args.rdklib_layer_arn:
-                layers.append(self.args.rdklib_layer_arn)
+            existing_layer_arn = self.__get_existing_lambda_layer()
+            if existing_layer_arn:
+                print("Here")
+                layers.append(existing_layer_arn)
             if self.args.lambda_layers:
                 for layer in self.args.lambda_layers.split(','):
                     layers.append(layer)
@@ -3110,8 +3106,7 @@ class rdk:
         response = lambda_client.list_layer_versions(LayerName="rdklib-layer")
         if response["LayerVersions"]:
             return response['LayerVersions'][0]['LayerVersionArn']
-        elif not response["LayerVersions"]:
-            return None
+        return None
 
     def __create_new_lambda_layer(self, session):
         print("Creating new rdklib-layer")
