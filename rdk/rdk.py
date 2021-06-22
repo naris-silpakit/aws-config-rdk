@@ -530,8 +530,7 @@ class rdk:
             my_iam.attach_role_policy(RoleName=config_role_name, PolicyArn='arn:' + partition + ':iam::aws:policy/service-role/AWSConfigRole')
             my_iam.attach_role_policy(RoleName=config_role_name, PolicyArn='arn:' + partition + ':iam::aws:policy/ReadOnlyAccess')
             policy_template = open(os.path.join(path.dirname(__file__), 'template', delivery_permission_policy_file), 'r').read()
-            delivery_permissions_policy = policy_template.replace('ACCOUNTID', account_id)
-            delivery_permissions_policy = delivery_permissions_policy.replace('PARTITION', partition)
+            delivery_permissions_policy = policy_template.replace('ACCOUNTID', account_id).replace('PARTITION', partition)
             my_iam.put_role_policy(RoleName=config_role_name, PolicyName='ConfigDeliveryPermissions', PolicyDocument=delivery_permissions_policy)
 
             #wait for changes to propagate.
