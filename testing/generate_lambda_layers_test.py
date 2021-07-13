@@ -23,7 +23,7 @@ region = arn_array[3]
 if region not in testing_regions[partition]:
     testing_regions[partition].append(region)
 
-subprocesses = [subprocess.Popen(["rdk", "-r", region, "init", "-g"]) for region in testing_regions[partition]]
+subprocesses = [subprocess.Popen(["rdk", "-r", region, "init", "--generate-lambda-layer"]) for region in testing_regions[partition]]
 
 received_bad_return_code = False
 
