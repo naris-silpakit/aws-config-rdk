@@ -62,7 +62,7 @@ for rule in rule_list:
 
     # Deploy the Rule
     subprocesses = [
-        subprocess.Popen(["rdk", "-r", region, "deploy", {rulename}, "--generated-lambda-layer"])
+        subprocess.Popen(["rdk", "-r", region, "deploy", rulename, "--generated-lambda-layer"])
         for region in testing_regions[partition]
     ]
     for process in subprocesses:
@@ -86,7 +86,7 @@ for rule in rule_list:
         if runtime != lambda_config["Runtime"]:
             # Make sure to undeploy the rules first if there's an error
             subprocesses = [
-                subprocess.Popen(["yes", "|", "rdk", "-r", region, "undeploy", {rulename}])
+                subprocess.Popen(["yes", "|", "rdk", "-r", region, "undeploy", rulename])
                 for region in testing_regions[partition]
             ]
             for process in subprocesses:
@@ -100,7 +100,7 @@ for rule in rule_list:
         if not found_layer:
             # Make sure to undeploy the rules first if there's an error
             subprocesses = [
-                subprocess.Popen(["yes", "|", "rdk", "-r", region, "undeploy", {rulename}])
+                subprocess.Popen(["yes", "|", "rdk", "-r", region, "undeploy", rulename])
                 for region in testing_regions[partition]
             ]
             for process in subprocesses:
@@ -109,7 +109,7 @@ for rule in rule_list:
             sys.exit(1)
 
     subprocesses = [
-        subprocess.Popen(["yes", "|", "rdk", "-r", region, "undeploy", {rulename}])
+        subprocess.Popen(["yes", "|", "rdk", "-r", region, "undeploy", rulename])
         for region in testing_regions[partition]
     ]
 
