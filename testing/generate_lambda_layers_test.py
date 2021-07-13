@@ -53,39 +53,40 @@ for region in testing_regions[partition]:
         sys.exit(1)
 
 for rule in rule_list:
-    os.system(f"rdk create {rule['rule']} --runtime {rule['runtime']}-lib")
 
-# subprocesses = [
-#     subprocess.Popen(["rdk", "-r", region, "deploy", "--all", "--generated-lambda-layer"])
-# ]
-subprocesses = []
-for region in testing_regions[partition]:
-    os.system(f"rdk -r {region} deploy --all --generated-lambda-layer")
-for process in subprocesses:
-    process.wait()
-    if process.returncode != 0:
-        print(process.communicate())
-        received_bad_return_code = True
+    rulename = rule["rule"]
+    runtime = rule["runtime"]
 
-if received_bad_return_code:
-    print(f"Error on {currentframe().f_lineno}")
-    sys.exit(1)
+    # Create the rule
+    os.system(f"rdk create {rulename} --runtime {runtime}-lib")
 
-# Check to see if lambda layers are in use
-for region in testing_regions[partition]:
-    if region != "us-east-1":
-        lambda_client = boto3.client("lambda", region_name=region)
-    else:
-        lambda_client = boto3.client("lambda")
-    layer = lambda_client.get_function()
-    for rule in rule_list:
-        rulename = rule["rule"].replace("_", "")
-        runtime = rule["runtime"]
+    # Deploy the Rule
+    subprocesses = [
+        subprocess.Popen(["rdk", "-r", region, "deploy", {rulename}, "--generated-lambda-layer"])
+        for region in testing_regions[partition]
+    ]
+    for process in subprocesses:
+        process.wait()
+        if process.returncode != 0:
+            print(process.communicate())
+            received_bad_return_code = True
+    if received_bad_return_code:
+        print(f"Error on {currentframe().f_lineno}")
+        sys.exit(1)
+
+    # Check to see if lambda layers are in use
+    for region in testing_regions[partition]:
+        if region != "us-east-1":
+            lambda_client = boto3.client("lambda", region_name=region)
+        else:
+            lambda_client = boto3.client("lambda")
+        layer = lambda_client.get_function()
+        rule_lambda_name = "RDK-Rule-Function-" + rule["rule"].replace("_", "")
         lambda_config = lambda_client.get_function(FunctionName=rulename)["Configuration"]
         if runtime != lambda_config["Runtime"]:
             # Make sure to undeploy the rules first if there's an error
             subprocesses = [
-                subprocess.Popen(["yes", "|", "rdk", "-r", region, "undeploy", "-a"])
+                subprocess.Popen(["yes", "|", "rdk", "-r", region, "undeploy", {rulename}])
                 for region in testing_regions[partition]
             ]
             for process in subprocesses:
@@ -99,7 +100,7 @@ for region in testing_regions[partition]:
         if not found_layer:
             # Make sure to undeploy the rules first if there's an error
             subprocesses = [
-                subprocess.Popen(["yes", "|", "rdk", "-r", region, "undeploy", "-a"])
+                subprocess.Popen(["yes", "|", "rdk", "-r", region, "undeploy", {rulename}])
                 for region in testing_regions[partition]
             ]
             for process in subprocesses:
@@ -107,17 +108,17 @@ for region in testing_regions[partition]:
             print(f"Error on {currentframe().f_lineno}")
             sys.exit(1)
 
+    subprocesses = [
+        subprocess.Popen(["yes", "|", "rdk", "-r", region, "undeploy", {rulename}])
+        for region in testing_regions[partition]
+    ]
 
-subprocesses = [
-    subprocess.Popen(["yes", "|", "rdk", "-r", region, "undeploy", "-a"]) for region in testing_regions[partition]
-]
+    for process in subprocesses:
+        process.wait()
+        if process.returncode != 0:
+            print(process.communicate())
+            received_bad_return_code = True
 
-for process in subprocesses:
-    process.wait()
-    if process.returncode != 0:
-        print(process.communicate())
-        received_bad_return_code = True
-
-if received_bad_return_code:
-    print(f"Error on {currentframe().f_lineno}")
-    sys.exit(1)
+    if received_bad_return_code:
+        print(f"Error on {currentframe().f_lineno}")
+        sys.exit(1)
