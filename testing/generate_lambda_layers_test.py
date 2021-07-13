@@ -40,6 +40,7 @@ if received_bad_return_code:
 
 # Check for generated rdklib-layers
 for region in testing_regions[partition]:
+    print(region)
     if region != "us-east-1":
         lambda_client = boto3.client("lambda", region_name=region)
     else:
