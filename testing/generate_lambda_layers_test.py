@@ -2,6 +2,7 @@ import boto3
 import subprocess
 import sys
 import os
+from inspect import currentframe
 
 testing_regions = {
     "aws": ["us-east-1", "ap-southeast-1", "eu-central-1", "sa-east-1"],
@@ -36,6 +37,7 @@ for process in subprocesses:
         received_bad_return_code = True
 
 if received_bad_return_code:
+    print(f"Error on {currentframe().f_lineno}")
     sys.exit(1)
 
 # Check for generated rdklib-layers
@@ -47,6 +49,7 @@ for region in testing_regions[partition]:
         lambda_client = boto3.client("lambda")
     response = lambda_client.list_layer_versions(LayerName="rdklib-layer")
     if not response["LayerVersions"]:
+        print(f"Error on {currentframe().f_lineno}")
         sys.exit(1)
 
 for rule in rule_list:
@@ -64,6 +67,7 @@ for process in subprocesses:
         received_bad_return_code = True
 
 if received_bad_return_code:
+    print(f"Error on {currentframe().f_lineno}")
     sys.exit(1)
 
 # Check to see if lambda layers are in use
@@ -85,6 +89,7 @@ for region in testing_regions[partition]:
             ]
             for process in subprocesses:
                 process.wait()
+            print(f"Error on {currentframe().f_lineno}")
             sys.exit(1)
         found_layer = False
         for layer in lambda_config["Layers"]:
@@ -98,6 +103,7 @@ for region in testing_regions[partition]:
             ]
             for process in subprocesses:
                 process.wait()
+            print(f"Error on {currentframe().f_lineno}")
             sys.exit(1)
 
 
@@ -112,4 +118,5 @@ for process in subprocesses:
         received_bad_return_code = True
 
 if received_bad_return_code:
+    print(f"Error on {currentframe().f_lineno}")
     sys.exit(1)
