@@ -55,11 +55,12 @@ for region in testing_regions[partition]:
 for rule in rule_list:
     os.system(f"rdk create {rule['rule']} --runtime {rule['runtime']}-lib")
 
-subprocesses = [
-    subprocess.Popen(["rdk", "-r", region, "deploy", "--all", "--generated-lambda-layer"])
-    for region in testing_regions[partition]
-]
-
+# subprocesses = [
+#     subprocess.Popen(["rdk", "-r", region, "deploy", "--all", "--generated-lambda-layer"])
+# ]
+subprocesses = []
+for region in testing_regions[partition]:
+    os.system(f"rdk -r {region} deploy --all --generated-lambda-layer")
 for process in subprocesses:
     process.wait()
     if process.returncode != 0:
