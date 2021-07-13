@@ -20,7 +20,7 @@ arn_array = sts_client.get_caller_identity()["Arn"].split(":")
 partition = arn_array[1]
 region = arn_array[3]
 
-if region not in testing_regions[partition]:
+if region not in testing_regions[partition] and region.strip() != "":
     testing_regions[partition].append(region)
 
 subprocesses = [
