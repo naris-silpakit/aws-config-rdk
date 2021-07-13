@@ -62,13 +62,17 @@ for rule in rule_list:
 
     # Deploy the Rule
     subprocesses = [
-        subprocess.Popen(["rdk", "-r", region, "deploy", rulename, "--generated-lambda-layer"])
+        {
+            "process": subprocess.Popen(["rdk", "-r", region, "deploy", rulename, "--generated-lambda-layer"]),
+            "region": region,
+        }
         for region in testing_regions[partition]
     ]
     for process in subprocesses:
-        process.wait()
-        if process.returncode != 0:
-            print(process.communicate())
+        process["process"].wait()
+        if process["process"].returncode != 0:
+            print(process["process"].communicate())
+            print("region: " + process["region"])
             received_bad_return_code = True
     if received_bad_return_code:
         print(f"Error on {currentframe().f_lineno}")
