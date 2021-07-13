@@ -58,7 +58,7 @@ for rule in rule_list:
     runtime = rule["runtime"]
 
     # Create the rule
-    os.system(f"rdk create {rulename} --runtime {runtime}-lib")
+    os.system(f"rdk create {rulename} --runtime {runtime}-lib --resource-types AWS::EC2::SecurityGroup")
 
     # Deploy the Rule
     subprocesses = [
