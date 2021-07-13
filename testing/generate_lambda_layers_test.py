@@ -84,7 +84,6 @@ for rule in rule_list:
             lambda_client = boto3.client("lambda", region_name=region)
         else:
             lambda_client = boto3.client("lambda")
-        layer = lambda_client.get_function()
         rule_lambda_name = "RDK-Rule-Function-" + rule["rule"].replace("_", "")
         lambda_config = lambda_client.get_function(FunctionName=rulename)["Configuration"]
         if runtime != lambda_config["Runtime"]:
