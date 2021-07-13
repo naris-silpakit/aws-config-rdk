@@ -23,7 +23,9 @@ region = arn_array[3]
 if region not in testing_regions[partition]:
     testing_regions[partition].append(region)
 
-subprocesses = [subprocess.Popen(["rdk", "-r", region, "init", "--generate-lambda-layer"]) for region in testing_regions[partition]]
+subprocesses = [
+    subprocess.Popen(["rdk", "-r", region, "init", "--generate-lambda-layer"]) for region in testing_regions[partition]
+]
 
 received_bad_return_code = False
 
@@ -65,25 +67,27 @@ for region in testing_regions[partition]:
     lambda_client = boto3.client("lambda", region_name=region)
     layer = lambda_client.get_function()
     for rule in rule_list:
-        rulename = rule['rule'].replace("_", "")
-        runtime = rule['runtime']
+        rulename = rule["rule"].replace("_", "")
+        runtime = rule["runtime"]
         lambda_config = lambda_client.get_function(FunctionName=rulename)["Configuration"]
         if runtime != lambda_config["Runtime"]:
             # Make sure to undeploy the rules first if there's an error
             subprocesses = [
-                subprocess.Popen(["yes", "|", "rdk", "-r", region, "undeploy", "-a"]) for region in testing_regions[partition]
+                subprocess.Popen(["yes", "|", "rdk", "-r", region, "undeploy", "-a"])
+                for region in testing_regions[partition]
             ]
             for process in subprocesses:
                 process.wait()
             sys.exit(1)
         found_layer = False
         for layer in lambda_config["Layers"]:
-            if "rdklib-layer" in layer['Arn']:
+            if "rdklib-layer" in layer["Arn"]:
                 found_layer = True
         if not found_layer:
             # Make sure to undeploy the rules first if there's an error
             subprocesses = [
-                subprocess.Popen(["yes", "|", "rdk", "-r", region, "undeploy", "-a"]) for region in testing_regions[partition]
+                subprocess.Popen(["yes", "|", "rdk", "-r", region, "undeploy", "-a"])
+                for region in testing_regions[partition]
             ]
             for process in subprocesses:
                 process.wait()
