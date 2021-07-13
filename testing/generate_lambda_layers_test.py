@@ -40,7 +40,10 @@ if received_bad_return_code:
 
 # Check for generated rdklib-layers
 for region in testing_regions[partition]:
-    lambda_client = boto3.client("lambda", region_name=region)
+    if region != "us-east-1":
+        lambda_client = boto3.client("lambda", region_name=region)
+    else:
+        lambda_client = boto3.client("lambda")
     response = lambda_client.list_layer_versions(LayerName="rdklib-layer")
     if not response["LayerVersions"]:
         sys.exit(1)
@@ -64,7 +67,10 @@ if received_bad_return_code:
 
 # Check to see if lambda layers are in use
 for region in testing_regions[partition]:
-    lambda_client = boto3.client("lambda", region_name=region)
+    if region != "us-east-1":
+        lambda_client = boto3.client("lambda", region_name=region)
+    else:
+        lambda_client = boto3.client("lambda")
     layer = lambda_client.get_function()
     for rule in rule_list:
         rulename = rule["rule"].replace("_", "")
