@@ -18,10 +18,6 @@ rule_list = [
 sts_client = boto3.client("sts")
 arn_array = sts_client.get_caller_identity()["Arn"].split(":")
 partition = arn_array[1]
-region = arn_array[3]
-
-if region not in testing_regions[partition] and region.strip() != "":
-    testing_regions[partition].append(region)
 
 for region in testing_regions[partition]:
     subprocess.run(f"rdk -r {region} init --generate-lambda-layer", shell=True)
