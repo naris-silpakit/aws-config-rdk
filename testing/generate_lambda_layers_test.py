@@ -20,8 +20,12 @@ arn_array = sts_client.get_caller_identity()["Arn"].split(":")
 partition = arn_array[1]
 region = arn_array[3].strip()
 
-for region in testing_regions[partition]:
-    subprocess.run(f"rdk -r {region} init --generate-lambda-layer", shell=True)
+out = subprocess.Popen(
+    f"rdk -r {region} init --generate-lambda-layer",
+    shell=True,
+    stdout=subprocess.DEVNULL,
+)
+out.wait()
 
 # Check for generated rdklib-layers
 print("Checking for generated lambda layers")
