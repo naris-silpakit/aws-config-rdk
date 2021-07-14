@@ -45,15 +45,18 @@ for rule in rule_list:
 
     # Create the rule
     subprocess.run(
-        f"rdk create {rulename} --runtime {runtime}-lib --resource-types AWS::EC2::SecurityGroup", shell=True,
-        stdout=subprocess.DEVNULL
+        f"rdk create {rulename} --runtime {runtime}-lib --resource-types AWS::EC2::SecurityGroup",
+        shell=True,
+        stdout=subprocess.DEVNULL,
     )
 
     # Deploy the Rule
     processes = [
         {
             "region": region,
-            "process": subprocess.Popen(f"rdk -r {region} deploy {rulename} --generated-lambda-layer", shell=True, stdout=subprocess.DEVNULL)
+            "process": subprocess.Popen(
+                f"rdk -r {region} deploy {rulename} --generated-lambda-layer", shell=True, stdout=subprocess.DEVNULL
+            ),
         }
         for region in testing_regions[partition]
     ]
@@ -100,7 +103,9 @@ for rule in rule_list:
     processes = [
         {
             "region": region,
-            "process": subprocess.Popen(f"yes | rdk -r {region} undeploy {rulename}", shell=True, stdout=subprocess.DEVNULL)
+            "process": subprocess.Popen(
+                f"yes | rdk -r {region} undeploy {rulename}", shell=True, stdout=subprocess.DEVNULL
+            ),
         }
         for region in testing_regions[partition]
     ]
