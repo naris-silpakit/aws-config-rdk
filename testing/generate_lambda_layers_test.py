@@ -71,6 +71,7 @@ for rule in rule_list:
         print("Deploying in " + process["region"])
         process["process"].wait()
         if process["process"].returncode != 0:
+            print(f"Failure in {process['region']}, communitcation: {process['process'].communicate()}")
             bad_return_code = True
     if bad_return_code:
         sys.exit(1)
