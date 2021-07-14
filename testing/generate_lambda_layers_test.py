@@ -39,15 +39,16 @@ for rule in rule_list:
     runtime = rule["runtime"]
 
     # Create the rule
+    print("Creating rule code")
     out = subprocess.Popen(
         f"rdk create {rulename} --runtime {runtime}-lib --resource-types AWS::EC2::SecurityGroup",
         shell=True,
         stdout=subprocess.DEVNULL,
     )
-
     out.wait()
 
     # Deploy the Rule
+    print("Deploying rule code")
     processes = [
         {
             "region": region,
@@ -66,9 +67,10 @@ for rule in rule_list:
     if bad_return_code:
         sys.exit(1)
     # Check to see if lambda layers are in use
+    print("Checking rule lambda layers")
     for region in testing_regions[partition]:
         lambda_client = boto3.client("lambda", region_name=region)
-        print("CHECKING IN REGION: "+region.upper())
+        print("CHECKING IN REGION: " + region.upper())
         rule_lambda_name = "RDK-Rule-Function-" + rule["rule"].replace("_", "")
         lambda_config = lambda_client.get_function(FunctionName=rule_lambda_name)["Configuration"]
         if runtime != lambda_config["Runtime"]:
@@ -105,6 +107,7 @@ for rule in rule_list:
         for region in testing_regions[partition]
     ]
     bad_return_code = False
+    print("Gracefully undeploying rule code")
     for process in processes:
         print("Undeploying in " + process["region"])
         process["process"].wait()
