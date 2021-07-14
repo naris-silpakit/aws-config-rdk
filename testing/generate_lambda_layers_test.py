@@ -45,13 +45,26 @@ for rule in rule_list:
 
     # Create the rule
     subprocess.run(
-        f"rdk create {rulename} --runtime {runtime}-lib --resource-types AWS::EC2::SecurityGroup", shell=True
+        f"rdk create {rulename} --runtime {runtime}-lib --resource-types AWS::EC2::SecurityGroup", shell=True,
+        stdout=subprocess.DEVNULL
     )
 
     # Deploy the Rule
-    for region in testing_regions[partition]:
-        subprocess.run(f"rdk -r {region} deploy {rulename} --generated-lambda-layer", shell=True)
-
+    processes = [
+        {
+            "region": region,
+            "process": subprocess.Popen(f"rdk -r {region} deploy {rulename} --generated-lambda-layer", shell=True, stdout=subprocess.DEVNULL)
+        }
+        for region in testing_regions[partition]
+    ]
+    bad_return_code = False
+    for process in processes:
+        print("Deploying in " + process["region"])
+        process["process"].wait()
+        if process["process"].returncode != 0:
+            bad_return_code = True
+    if bad_return_code:
+        sys.exit(1)
     # Check to see if lambda layers are in use
     for region in testing_regions[partition]:
         if region != "us-east-1":
@@ -61,9 +74,10 @@ for rule in rule_list:
         rule_lambda_name = "RDK-Rule-Function-" + rule["rule"].replace("_", "")
         lambda_config = lambda_client.get_function(FunctionName=rule_lambda_name)["Configuration"]
         if runtime != lambda_config["Runtime"]:
+            print("Deployed a lambda with the wrong runtime, rolling back")
             # Make sure to undeploy the rules first if there's an error
             processes = [
-                subprocess.Popen(f"yes | rdk -r {region} undeploy {rulename}", shell=True)
+                subprocess.Popen(f"yes | rdk -r {region} undeploy {rulename}", shell=True, stdout=subprocess.DEVNULL)
                 for region in testing_regions[partition]
             ]
             for process in processes:
@@ -74,23 +88,27 @@ for rule in rule_list:
             if "rdklib-layer" in layer["Arn"]:
                 found_layer = True
         if not found_layer:
+            print("Deployed a lambda without the required layer, rolling back")
             # Make sure to undeploy the rules first if there's an error
             processes = [
-                subprocess.Popen(f"yes | rdk -r {region} undeploy {rulename}", shell=True)
+                subprocess.Popen(f"yes | rdk -r {region} undeploy {rulename}", shell=True, stdout=subprocess.DEVNULL)
                 for region in testing_regions[partition]
             ]
             for process in processes:
                 process.wait()
             sys.exit(1)
-
     processes = [
-        subprocess.Popen(f"yes | rdk -r {region} undeploy {rulename}", shell=True)
+        {
+            "region": region,
+            "process": subprocess.Popen(f"yes | rdk -r {region} undeploy {rulename}", shell=True, stdout=subprocess.DEVNULL)
+        }
         for region in testing_regions[partition]
     ]
     bad_return_code = False
     for process in processes:
-        process.wait()
-        if process.returncode != 0:
+        print("Undeploying in " + process["region"])
+        process["process"].wait()
+        if process["process"].returncode != 0:
             bad_return_code = True
     if bad_return_code:
         sys.exit(1)
