@@ -2,9 +2,9 @@ import boto3
 import sys
 
 rule_list = [
-    {"rule": "LP3_TestRule_P38-lib", "runtime": "python3.8"},
-    {"rule": "LP3_TestRule_P37-lib", "runtime": "python3.7"},
-    {"rule": "LP3_TestRule_P36-lib", "runtime": "python3.6"},
+    {"rule": "LP3_TestRule_P38_lib", "runtime": "python3.8"},
+    {"rule": "LP3_TestRule_P37_lib", "runtime": "python3.7"},
+    {"rule": "LP3_TestRule_P36_lib", "runtime": "python3.6"},
 ]
 
 lambda_client = boto3.client("lambda")
