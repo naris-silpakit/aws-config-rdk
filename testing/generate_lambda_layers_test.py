@@ -25,15 +25,16 @@ for region in testing_regions[partition]:
 
 # Check for generated rdklib-layers
 for region in testing_regions[partition]:
-    print(region)
+    print("Checking for lambda layer in:" + region)
     lambda_client = boto3.client("lambda", region_name=region)
     response = lambda_client.list_layer_versions(LayerName="rdklib-layer")
     if not response["LayerVersions"]:
         print(f"Error on {currentframe().f_lineno}")
         sys.exit(1)
+    print("Found!")
 
 for rule in rule_list:
-
+    print(f"Running tests for rule {rule['rule']} with runtime {rule['runtime']}")
     rulename = rule["rule"]
     runtime = rule["runtime"]
 
