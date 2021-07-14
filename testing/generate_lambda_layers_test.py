@@ -18,6 +18,11 @@ rule_list = [
 sts_client = boto3.client("sts")
 arn_array = sts_client.get_caller_identity()["Arn"].split(":")
 partition = arn_array[1]
+region = arn_array[3].strip()
+
+if(region and region not in testing_regions[partition]):
+    testing_regions[partition].append(region)
+
 
 for region in testing_regions[partition]:
     subprocess.run(f"rdk -r {region} init --generate-lambda-layer", shell=True)
@@ -25,10 +30,7 @@ for region in testing_regions[partition]:
 # Check for generated rdklib-layers
 for region in testing_regions[partition]:
     print(region)
-    if region != "us-east-1":
-        lambda_client = boto3.client("lambda", region_name=region)
-    else:
-        lambda_client = boto3.client("lambda")
+    lambda_client = boto3.client("lambda", region_name=region)
     response = lambda_client.list_layer_versions(LayerName="rdklib-layer")
     if not response["LayerVersions"]:
         print(f"Error on {currentframe().f_lineno}")
