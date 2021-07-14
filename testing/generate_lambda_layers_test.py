@@ -24,6 +24,7 @@ for region in testing_regions[partition]:
     subprocess.run(f"rdk -r {region} init --generate-lambda-layer", shell=True)
 
 # Check for generated rdklib-layers
+print("Checking for generated lambda layers")
 for region in testing_regions[partition]:
     print("Checking for lambda layer in:" + region)
     lambda_client = boto3.client("lambda", region_name=region)
