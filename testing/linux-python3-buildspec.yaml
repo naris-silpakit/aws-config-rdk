@@ -26,9 +26,9 @@ phases:
       - rdk deploy LP3_TestRule_P37-lib --generated-lambda-layer
       - rdk deploy LP3_TestRule_P36-lib --generated-lambda-layer
       - python3 testing/generate_lambda_layers_test.py
-      - rdk undeploy LP3_TestRule_P38-lib
-      - rdk undeploy LP3_TestRule_P37-lib
-      - rdk undeploy LP3_TestRule_P36-lib
+      - yes | rdk undeploy LP3_TestRule_P38-lib
+      - yes | rdk undeploy LP3_TestRule_P37-lib
+      - yes | rdk undeploy LP3_TestRule_P36-lib
       - rdk create LP3_TestRule_P38 --runtime python3.8 --resource-types AWS::EC2::SecurityGroup
       - rdk create LP3_TestRule_P37 --runtime python3.7 --resource-types AWS::EC2::SecurityGroup
       - rdk create LP3_TestRule_P3 --runtime python3.6 --resource-types AWS::EC2::SecurityGroup
