@@ -20,10 +20,6 @@ arn_array = sts_client.get_caller_identity()["Arn"].split(":")
 partition = arn_array[1]
 region = arn_array[3].strip()
 
-if(region and region not in testing_regions[partition]):
-    testing_regions[partition].append(region)
-
-
 for region in testing_regions[partition]:
     subprocess.run(f"rdk -r {region} init --generate-lambda-layer", shell=True)
 
@@ -70,10 +66,7 @@ for rule in rule_list:
         sys.exit(1)
     # Check to see if lambda layers are in use
     for region in testing_regions[partition]:
-        if region != "us-east-1":
-            lambda_client = boto3.client("lambda", region_name=region)
-        else:
-            lambda_client = boto3.client("lambda")
+        lambda_client = boto3.client("lambda", region_name=region)
         print("CHECKING IN REGION: "+region.upper())
         rule_lambda_name = "RDK-Rule-Function-" + rule["rule"].replace("_", "")
         lambda_config = lambda_client.get_function(FunctionName=rule_lambda_name)["Configuration"]
