@@ -40,11 +40,13 @@ for rule in rule_list:
     runtime = rule["runtime"]
 
     # Create the rule
-    subprocess.run(
+    out = subprocess.Popen(
         f"rdk create {rulename} --runtime {runtime}-lib --resource-types AWS::EC2::SecurityGroup",
         shell=True,
         stdout=subprocess.DEVNULL,
     )
+
+    out.wait()
 
     # Deploy the Rule
     processes = [
