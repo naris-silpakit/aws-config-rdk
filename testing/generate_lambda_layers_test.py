@@ -62,8 +62,12 @@ for rule in rule_list:
         lambda_config = lambda_client.get_function(FunctionName=rule_lambda_name)["Configuration"]
         if runtime != lambda_config["Runtime"]:
             # Make sure to undeploy the rules first if there's an error
-            for region in testing_regions[partition]:
-                subprocess.run(f"yes | rdk -r {region} undeploy {rulename}", shell=True)
+            processes = [
+                subprocess.Popen(f"yes | rdk -r {region} undeploy {rulename}", shell=True)
+                for region in testing_regions[partition]
+            ]
+            for process in processes:
+                process.wait()
             sys.exit(1)
         found_layer = False
         for layer in lambda_config["Layers"]:
@@ -71,9 +75,22 @@ for rule in rule_list:
                 found_layer = True
         if not found_layer:
             # Make sure to undeploy the rules first if there's an error
-            for region in testing_regions[partition]:
-                subprocess.run(f"yes | rdk -r {region} undeploy {rulename}", shell=True)
+            processes = [
+                subprocess.Popen(f"yes | rdk -r {region} undeploy {rulename}", shell=True)
+                for region in testing_regions[partition]
+            ]
+            for process in processes:
+                process.wait()
             sys.exit(1)
 
-    for region in testing_regions[partition]:
-        subprocess.run(f"yes | rdk -r {region} undeploy {rulename}", shell=True)
+    processes = [
+        subprocess.Popen(f"yes | rdk -r {region} undeploy {rulename}", shell=True)
+        for region in testing_regions[partition]
+    ]
+    bad_return_code = False
+    for process in processes:
+        process.wait()
+        if process.returncode != 0:
+            bad_return_code = True
+    if bad_return_code:
+        sys.exit(1)
