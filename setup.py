@@ -27,6 +27,7 @@ setup(name='rdk',
       packages=['rdk'],
       install_requires=[
           'boto3',
+          'yaml',
       ],
       entry_points={
               'console_scripts': [

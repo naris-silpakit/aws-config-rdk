@@ -22,8 +22,7 @@ from builtins import input
 from datetime import datetime
 from os import path
 import uuid
-import shutil
-
+import yaml
 import boto3
 import botocore
 from botocore.exceptions import ClientError
@@ -1193,7 +1192,7 @@ class rdk:
                         try:
                             cfn_args = {
                                 'StackName': my_stack_name,
-                                'TemplateBody': json.dumps(json_body),
+                                'TemplateBody': yaml.safe_dump(json_body,sort_keys=False),
                                 'Parameters': my_params,
                                 'Capabilities': ['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM']
                             }
@@ -1221,7 +1220,7 @@ class rdk:
                         if "Remediation" in rule_params:
                             cfn_args = {
                                 'StackName': my_stack_name,
-                                'TemplateBody': json.dumps(json_body),
+                                'TemplateBody': yaml.safe_dump(json_body,sort_keys=False),
                                 'Parameters': my_params,
                                 'Capabilities': ['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM']
                             }
@@ -1454,7 +1453,7 @@ class rdk:
                 try:
                     cfn_args = {
                         'StackName': my_stack_name,
-                        'TemplateBody': json.dumps(json_body),
+                        'TemplateBody': yaml.safe_dump(json_body,sort_keys=False),
                         'Parameters': my_params,
                         'Capabilities': ['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM']
                     }
@@ -1495,7 +1494,7 @@ class rdk:
                 print (f"[{self.args.region}]: Creating CloudFormation Stack for " + rule_name)
                 cfn_args = {
                     'StackName': my_stack_name,
-                    'TemplateBody': json.dumps(json_body),
+                    'TemplateBody': yaml.safe_dump(json_body,sort_keys=False),
                     'Parameters': my_params,
                     'Capabilities': ['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM']
                 }
