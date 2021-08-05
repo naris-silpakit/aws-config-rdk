@@ -57,7 +57,7 @@ if deploy_return_code != 0:
 
 # rdk undeploy in test-commercial
 print("Multi-region test: trying undeploy...")
-undeploy_command = f"rdk -f {test_file_name} --region-set undeploy --force MFA_ENABLED_RULE"
+undeploy_command = f"rdk -f {test_file_name} --region-set test-commercial undeploy --force MFA_ENABLED_RULE"
 undeploy_return_code = os.system(undeploy_command)
 
 if undeploy_return_code != 0:
