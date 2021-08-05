@@ -28,14 +28,13 @@ def main():
             regions = rdk.parse_region_file(args)
             print(f"Deleting rules in the following regions: {regions}.")
             if args.command == 'undeploy' and "--force" not in args.command_args:
-                confirmation = False
-                while not confirmation:
-                    my_input = input("Delete specified Rules and Lambda Functions from your AWS Account? (y/N): ")
-                    if my_input.lower() == "y":
-                        confirmation = True
-                        vars(args)["command_args"].append("--force")
-                    if my_input.lower() == "n" or my_input == "":
-                        exit(0)
+                my_input = input("Delete specified Rules and Lambda Functions from your AWS Account? (y/N): ")
+                while my_input not in ["y", "n"]:
+                    my_input = input(f"Invalid input: {my_input}. Please enter either 'y' or 'n': ")
+                if my_input.lower() == "y":
+                    vars(args)["command_args"].append("--force")
+                elif my_input.lower() == "n" or my_input == "":
+                    exit(0)
 
             args_list = []
             for region in regions:

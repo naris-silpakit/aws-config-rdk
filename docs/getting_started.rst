@@ -231,7 +231,7 @@ To run a subcommand with a region set, pass in the region set yaml file and the 
 
 ::
 
-    $ rdk -f regions.yaml -i region-set-1 undeploy CUSTOM_RULE
+    $ rdk -f regions.yaml --region-set region-set-1 undeploy CUSTOM_RULE
     Deleting rules in the following regions: ['sa-east-1', 'us-east-1'].
     Delete specified Rules and Lambda Functions from your AWS Account? (y/N): y
     [sa-east-1] Running un-deploy!

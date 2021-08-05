@@ -1,7 +1,8 @@
 import os
-
 # Set up test directory
 import sys
+
+import boto3
 
 cwd = os.getcwd()
 test_dir = os.path.join(cwd, "multi_region_test")
@@ -38,15 +39,25 @@ if create_return_code != 0:
 
 # run rdk deploy in test-commercial
 print("Multi-region test: trying deploy...")
-deploy_command = f"rdk -f {test_file_name} -i test-commercial deploy MFA_ENABLED_RULE"
+deploy_command = f"rdk -f {test_file_name} --region-set test-commercial deploy MFA_ENABLED_RULE"
 deploy_return_code = os.system(deploy_command)
+
+cfn_client_ap_east = boto3.client('cloudformation', region_name='ap-east-1')
+stack_status_ap_east = cfn_client_ap_east.describe_stacks(StackName='MFAENABLEDRULE')
+if stack_status_ap_east["Stacks"][0]["StackStatus"] != "CREATE_COMPLETE":
+    sys.exit(1)
+
+cfn_client_us_west = boto3.client('cloudformation', region_name='us-west-1')
+stack_status_us_west = cfn_client_us_west.describe_stacks(StackName='MFAENABLEDRULE')
+if stack_status_us_west["Stacks"][0]["StackStatus"] != "CREATE_COMPLETE":
+    sys.exit(1)
 
 if deploy_return_code != 0:
     sys.exit(1)
 
 # rdk undeploy in test-commercial
 print("Multi-region test: trying undeploy...")
-undeploy_command = f"rdk -f {test_file_name} -i test-commercial undeploy --force MFA_ENABLED_RULE"
+undeploy_command = f"rdk -f {test_file_name} --region-set undeploy --force MFA_ENABLED_RULE"
 undeploy_return_code = os.system(undeploy_command)
 
 if undeploy_return_code != 0:
