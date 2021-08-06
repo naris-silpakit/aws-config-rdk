@@ -29,7 +29,7 @@ def main():
             print(f"Deleting rules in the following regions: {regions}.")
             if args.command == 'undeploy' and "--force" not in args.command_args:
                 my_input = input("Delete specified Rules and Lambda Functions from your AWS Account? (y/N): ")
-                while my_input not in ["y", "n"]:
+                while my_input.lower() not in ["y", "n"]:
                     my_input = input(f"Invalid input: {my_input}. Please enter either 'y' or 'n': ")
                 if my_input.lower() == "y":
                     vars(args)["command_args"].append("--force")
