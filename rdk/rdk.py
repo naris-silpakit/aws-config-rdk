@@ -49,7 +49,7 @@ example_ci_dir = 'example_ci'
 test_ci_filename = 'test_ci.json'
 event_template_filename = 'test_event_template.json'
 
-RDKLIB_LAYER_VERSION={'ap-southeast-1':'26', 'ap-south-1':'4', 'us-east-2':'4', 'us-east-1':'4', 'us-west-1':'3', 'us-west-2':'3', 'ap-northeast-2':'4', 'ap-southeast-2':'4', 'ap-northeast-1':'4', 'ca-central-1':'4', 'eu-central-1':'4', 'eu-west-1':'4', 'eu-west-2':'3', 'eu-west-3':'4', 'eu-north-1':'4', 'sa-east-1':'4', 'cn-north-1': '1', 'cn-northwest-1': '1'}
+RDKLIB_LAYER_VERSION={'ap-southeast-1':'26', 'ap-south-1':'4', 'us-east-2':'4', 'us-east-1':'4', 'us-west-1':'3', 'us-west-2':'3', 'ap-northeast-2':'4', 'ap-southeast-2':'4', 'ap-northeast-1':'4', 'ca-central-1':'4', 'eu-central-1':'4', 'eu-west-1':'4', 'eu-west-2':'3', 'eu-west-3':'4', 'eu-north-1':'4', 'sa-east-1':'4', 'cn-north-1': '1', 'cn-northwest-1': '1', 'ap-east-1': '1'}
 RDKLIB_ARN_STRING = "arn:aws:lambda:{region}:711761543063:layer:rdklib-layer:{version}"
 PARALLEL_COMMAND_THROTTLE_PERIOD = 2  # 2 seconds, used in running commands in parallel over multiple regions
 
@@ -448,10 +448,12 @@ class rdk:
             This is a test.
         """
         self.args = get_init_parser().parse_args(self.args.command_args, self.args)
-        print (f"[{self.args.region}]: Running init!")
+
 
         #create custom session based on whatever credentials are available to us
         my_session = self.__get_boto_session()
+
+        print (f"[{my_session.region_name}]: Running init!")
 
         #Create our ConfigService client
         my_config = my_session.client('config')
@@ -468,25 +470,25 @@ class rdk:
 
         config_bucket_exists = False
         if self.args.config_bucket_exists_in_another_account:
-            print(f"[{self.args.region}]: Skipping Config Bucket check due to command line args")
+            print(f"[{my_session.region_name}]: Skipping Config Bucket check due to command line args")
             config_bucket_exists = True
 
         config_bucket_name = config_bucket_prefix + "-" + account_id
 
         control_tower = False
         if self.args.control_tower:
-            print(f"[{self.args.region}]: This account is part of an AWS Control Tower managed organization. Playing nicely with it")
+            print(f"[{my_session.region_name}]: This account is part of an AWS Control Tower managed organization. Playing nicely with it")
             control_tower = True
 
         lambda_layer_version = self.__get_existing_lambda_layer(my_session)
         if lambda_layer_version:
-            print("Found Version: " + lambda_layer_version)
+            print(f"[{my_session.region_name}]: Found Version: " + lambda_layer_version)
 
         if self.args.generate_lambda_layer or not lambda_layer_version:
             if self.args.generate_lambda_layer:
-                print(f"--generate-lambda-layer Flag received, forcing update of the Lambda Layer in {my_session.region_name}")
+                print(f"[{my_session.region_name}]: --generate-lambda-layer Flag received, forcing update of the Lambda Layer in {my_session.region_name}")
             else:
-                print(f"Lambda Layer not found in {my_session.region_name}. Creating one now")
+                print(f"[{my_session.region_name}]: Lambda Layer not found in {my_session.region_name}. Creating one now")
             lambda_layer_version = self.__create_new_lambda_layer(my_session)
 
         #Check to see if the ConfigRecorder has been created.
@@ -495,8 +497,8 @@ class rdk:
             config_recorder_exists = True
             config_recorder_name = recorders['ConfigurationRecorders'][0]['name']
             config_role_arn = recorders['ConfigurationRecorders'][0]['roleARN']
-            print(f"[{self.args.region}]: Found Config Recorder: " + config_recorder_name)
-            print(f"[{self.args.region}]: Found Config Role: " + config_role_arn)
+            print(f"[{my_session.region_name}]: Found Config Recorder: " + config_recorder_name)
+            print(f"[{my_session.region_name}]: Found Config Role: " + config_role_arn)
 
         delivery_channels = my_config.describe_delivery_channels()
         if len(delivery_channels['DeliveryChannels']) > 0:
@@ -511,12 +513,12 @@ class rdk:
             bucket_exists = False
             for bucket in response['Buckets']:
                 if bucket['Name'] == config_bucket_name:
-                    print("Found Bucket: " + config_bucket_name)
+                    print(f"[{my_session.region_name}]: Found Bucket: " + config_bucket_name)
                     config_bucket_exists = True
                     bucket_exists = True
 
             if not bucket_exists:
-                print(f'[{self.args.region}]: Creating Config bucket '+config_bucket_name )
+                print(f'[{my_session.region_name}]: Creating Config bucket '+config_bucket_name )
                 if my_session.region_name == 'us-east-1':
                     my_s3.create_bucket(
                         Bucket=config_bucket_name
@@ -539,7 +541,7 @@ class rdk:
                     role_exists = True
 
             if not role_exists:
-                print(f'[{self.args.region}]: Creating IAM role config-role')
+                print(f'[{my_session.region_name}]: Creating IAM role config-role')
                 if partition in ["aws","aws-us-gov"]:
                     partition_url = ".com"
                 elif partition == "aws-cn":
@@ -563,7 +565,7 @@ class rdk:
             my_iam.put_role_policy(RoleName=config_role_name, PolicyName='ConfigDeliveryPermissions', PolicyDocument=delivery_permissions_policy)
 
             #wait for changes to propagate.
-            print(f'[{self.args.region}]: Waiting for IAM role to propagate')
+            print(f'[{my_session.region_name}]: Waiting for IAM role to propagate')
             time.sleep(16)
 
         #create or update config recorder
@@ -575,16 +577,16 @@ class rdk:
 
             if not delivery_channel_exists:
                 #create delivery channel
-                print(f"[{self.args.region}]: Creating delivery channel to bucket " + config_bucket_name)
+                print(f"[{my_session.region_name}]: Creating delivery channel to bucket " + config_bucket_name)
                 my_config.put_delivery_channel(DeliveryChannel={'name':'default', 's3BucketName':config_bucket_name, 'configSnapshotDeliveryProperties':{'deliveryFrequency':'Six_Hours'}})
 
             #start config recorder
             my_config.start_configuration_recorder(ConfigurationRecorderName=config_recorder_name)
-            print(f'[{self.args.region}]: Config Service is ON')
+            print(f'[{my_session.region_name}]: Config Service is ON')
         else:
-            print(f'[{self.args.region}]: Skipped put_configuration_recorder, put_delivery_channel & start_configuration_recorder as this is part of a Control Tower managed Organization')
+            print(f'[{my_session.region_name}]: Skipped put_configuration_recorder, put_delivery_channel & start_configuration_recorder as this is part of a Control Tower managed Organization')
 
-        print(f'[{self.args.region}]: Config setup complete.')
+        print(f'[{my_session.region_name}]: Config setup complete.')
 
         #create code bucket
         code_bucket_name = code_bucket_prefix + account_id + "-" + my_session.region_name
@@ -597,9 +599,9 @@ class rdk:
 
         if not bucket_exists:
             if self.args.skip_code_bucket_creation:
-                print(f'[{self.args.region}]: Skipping Code Bucket creation due to command line args')
+                print(f'[{my_session.region_name}]: Skipping Code Bucket creation due to command line args')
             else:
-                print(f'[{self.args.region}]: Creating Code bucket '+code_bucket_name )
+                print(f'[{my_session.region_name}]: Creating Code bucket '+code_bucket_name )
 
             #Consideration for us-east-1 S3 API
             if my_session.region_name == 'us-east-1':
@@ -913,10 +915,12 @@ class rdk:
         #get the rule names
         rule_names = self.__get_rule_list_for_command()
 
-        print(f"[{self.args.region}]: Running un-deploy!")
+
 
         #create custom session based on whatever credentials are available to us.
         my_session = self.__get_boto_session()
+
+        print(f"[{my_session.region_name}]: Running un-deploy!")
 
         #Collect a list of all of the CloudFormation templates that we delete.  We'll need it at the end to make sure everything worked.
         deleted_stacks = []
@@ -928,9 +932,9 @@ class rdk:
                 cfn_client.delete_stack(StackName=self.args.stack_name)
                 deleted_stacks.append(self.args.stack_name)
             except ClientError as ce:
-                print(f"[{self.args.region}]: Client Error encountered attempting to delete CloudFormation stack for Lambda Functions: " + str(ce))
+                print(f"[{my_session.region_name}]: Client Error encountered attempting to delete CloudFormation stack for Lambda Functions: " + str(ce))
             except Exception as e:
-                print(f"[{self.args.region}]: Exception encountered attempting to delete CloudFormation stack for Lambda Functions: " + str(e))
+                print(f"[{my_session.region_name}]: Exception encountered attempting to delete CloudFormation stack for Lambda Functions: " + str(e))
 
             return
 
@@ -939,17 +943,17 @@ class rdk:
                 cfn_client.delete_stack(StackName=self.__get_stack_name_from_rule_name(rule_name))
                 deleted_stacks.append(self.__get_stack_name_from_rule_name(rule_name))
             except ClientError as ce:
-                print(f"[{self.args.region}]: Client Error encountered attempting to delete CloudFormation stack for Rule: " + str(ce))
+                print(f"[{my_session.region_name}]: Client Error encountered attempting to delete CloudFormation stack for Rule: " + str(ce))
             except Exception as e:
-                print(f"[{self.args.region}]: Exception encountered attempting to delete CloudFormation stack for Rule: " + str(e))
+                print(f"[{my_session.region_name}]: Exception encountered attempting to delete CloudFormation stack for Rule: " + str(e))
 
-        print(f"[{self.args.region}]: Rule removal initiated. Waiting for Stack Deletion to complete.")
+        print(f"[{my_session.region_name}]: Rule removal initiated. Waiting for Stack Deletion to complete.")
 
         for stack_name in deleted_stacks:
             self.__wait_for_cfn_stack(cfn_client, stack_name)
 
-        print(f"[{self.args.region}]: Rule removal complete, but local files have been preserved.")
-        print(f"[{self.args.region}]: To re-deploy, use the 'deploy' command.")
+        print(f"[{my_session.region_name}]: Rule removal complete, but local files have been preserved.")
+        print(f"[{my_session.region_name}]: To re-deploy, use the 'deploy' command.")
 
     def deploy(self):
         self.__parse_deploy_args()
@@ -1001,7 +1005,7 @@ class rdk:
             for rule_name in rule_names:
                 rule_params, cfn_tags = self.__get_rule_parameters(rule_name)
                 if 'SourceIdentifier' in rule_params:
-                    print(f"[{self.args.region}]: Skipping code packaging for Managed Rule.")
+                    print(f"[{my_session.region_name}]: Skipping code packaging for Managed Rule.")
                 else:
                     s3_dst = self.__upload_function_code(rule_name, rule_params, account_id, my_session, code_bucket_name)
                     s3_code_objects[rule_name] = s3_dst
@@ -1019,7 +1023,7 @@ class rdk:
                 my_stack = my_cfn.describe_stacks(StackName=self.args.stack_name)
 
                 #If we've gotten here, stack exists and we should update it.
-                print (f"[{self.args.region}]: Updating CloudFormation Stack for Lambda functions.")
+                print (f"[{my_session.region_name}]: Updating CloudFormation Stack for Lambda functions.")
                 try:
 
                     cfn_args = {
@@ -1041,7 +1045,7 @@ class rdk:
                     if e.response['Error']['Code'] == 'ValidationError':
                         if 'No updates are to be performed.' in str(e):
                             #No changes made to Config rule definition, so CloudFormation won't do anything.
-                            print(f"[{self.args.region}]: No changes to Config Rule configurations.")
+                            print(f"[{my_session.region_name}]: No changes to Config Rule configurations.")
                         else:
                             #Something unexpected has gone wrong.  Emit an error and bail.
                             print(e)
@@ -1054,10 +1058,10 @@ class rdk:
                     rule_params, cfn_tags = self.__get_rule_parameters(rule_name)
                     my_lambda_arn = self.__get_lambda_arn_for_rule(rule_name, partition, my_session.region_name, account_id, rule_params)
                     if 'SourceIdentifier' in rule_params:
-                        print(f"[{self.args.region}]: Skipping Lambda upload for Managed Rule.")
+                        print(f"[{my_session.region_name}]: Skipping Lambda upload for Managed Rule.")
                         continue
 
-                    print(f"[{self.args.region}]: Publishing Lambda code...")
+                    print(f"[{my_session.region_name}]: Publishing Lambda code...")
                     my_lambda_client = my_session.client('lambda')
                     my_lambda_client.update_function_code(
                         FunctionName=my_lambda_arn,
@@ -1065,10 +1069,10 @@ class rdk:
                         S3Key=s3_code_objects[rule_name],
                         Publish=True
                     )
-                    print(f"[{self.args.region}]: Lambda code updated.")
+                    print(f"[{my_session.region_name}]: Lambda code updated.")
             except ClientError as e:
                 #If we're in the exception, the stack does not exist and we should create it.
-                print (f"[{self.args.region}]: Creating CloudFormation Stack for Lambda Functions.")
+                print (f"[{my_session.region_name}]: Creating CloudFormation Stack for Lambda Functions.")
 
                 cfn_args = {
                     'StackName': self.args.stack_name,
@@ -1156,7 +1160,7 @@ class rdk:
                     }]
                 my_cfn = my_session.client('cloudformation')
                 if "Remediation" in rule_params:
-                    print(f'[{self.args.region}]: Build The CFN Template with Remediation Settings')
+                    print(f'[{my_session.region_name}]: Build The CFN Template with Remediation Settings')
                     cfn_body = os.path.join(path.dirname(__file__), 'template',  "configManagedRuleWithRemediation.json")
                     template_body = open(cfn_body, "r").read()
                     json_body = json.loads(template_body)
@@ -1165,11 +1169,11 @@ class rdk:
 
                     if "SSMAutomation" in rule_params:
                         #Reference the SSM Automation Role Created, if IAM is created
-                        print(f'[{self.args.region}]: Building SSM Automation Section')
+                        print(f'[{my_session.region_name}]: Building SSM Automation Section')
                         ssm_automation = self.__create_automation_cloudformation_block(rule_params['SSMAutomation'], self.__get_alphanumeric_rule_name(rule_name))
                         json_body["Resources"][self.__get_alphanumeric_rule_name(rule_name+'RemediationAction')] = ssm_automation
                         if "IAM" in rule_params['SSMAutomation']:
-                            print(f'[{self.args.region}]: Lets Build IAM Role and Policy')
+                            print(f'[{my_session.region_name}]: Lets Build IAM Role and Policy')
                             #TODO Check For IAM Settings
                             json_body["Resources"]['Remediation']['Properties']['Parameters']['AutomationAssumeRole']['StaticValue']['Values'] = [{"Fn::GetAtt":[self.__get_alphanumeric_rule_name(rule_name+"Role"), "Arn"]}]
 
@@ -1177,7 +1181,7 @@ class rdk:
                             json_body["Resources"][self.__get_alphanumeric_rule_name(rule_name+'Role')] = ssm_iam_role
                             json_body["Resources"][self.__get_alphanumeric_rule_name(rule_name+'Policy')] = ssm_iam_policy
 
-                            print(f'[{self.args.region}]: Build Supporting SSM Resources')
+                            print(f'[{my_session.region_name}]: Build Supporting SSM Resources')
                             resource_depends_on = ['rdkConfigRule', self.__get_alphanumeric_rule_name(rule_name+"RemediationAction")]
                             #Builds SSM Document Before Config RUle
                             json_body["Resources"]["Remediation"]['DependsOn'] = resource_depends_on
@@ -1187,7 +1191,7 @@ class rdk:
                         my_stack_name = self.__get_stack_name_from_rule_name(rule_name)
                         my_stack = my_cfn.describe_stacks(StackName=my_stack_name)
                         #If we've gotten here, stack exists and we should update it.
-                        print (f"[{self.args.region}]: Updating CloudFormation Stack for " + rule_name)
+                        print (f"[{my_session.region_name}]: Updating CloudFormation Stack for " + rule_name)
                         try:
                             cfn_args = {
                                 'StackName': my_stack_name,
@@ -1205,7 +1209,7 @@ class rdk:
                             if e.response['Error']['Code'] == 'ValidationError':
                                 if 'No updates are to be performed.' in str(e):
                                     #No changes made to Config rule definition, so CloudFormation won't do anything.
-                                    print(f"[{self.args.region}]: No changes to Config Rule.")
+                                    print(f"[{my_session.region_name}]: No changes to Config Rule.")
                                 else:
                                     #Something unexpected has gone wrong.  Emit an error and bail.
                                     print(e)
@@ -1214,7 +1218,7 @@ class rdk:
                                 raise
                     except ClientError as e:
                         #If we're in the exception, the stack does not exist and we should create it.
-                        print (f"[{self.args.region}]: Creating CloudFormation Stack for " + rule_name)
+                        print (f"[{my_session.region_name}]: Creating CloudFormation Stack for " + rule_name)
 
                         if "Remediation" in rule_params:
                             cfn_args = {
@@ -1266,10 +1270,10 @@ class rdk:
                             if e.response['Error']['Code'] == 'ValidationError':
                                 if 'No updates are to be performed.' in str(e):
                                     #No changes made to Config rule definition, so CloudFormation won't do anything.
-                                    print(f"[{self.args.region}]: No changes to Config Rule.")
+                                    print(f"[{my_session.region_name}]: No changes to Config Rule.")
                                 else:
                                     #Something unexpected has gone wrong.  Emit an error and bail.
-                                    print(f"[{self.args.region}]: {e}")
+                                    print(f"[{my_session.region_name}]:  {e}")
                                     return 1
                             else:
                                 raise
@@ -1296,7 +1300,7 @@ class rdk:
 
                 continue
 
-            print(f"[{self.args.region}]: Found Custom Rule.")
+            print(f"[{my_session.region_name}]: Found Custom Rule.")
 
             s3_src = ""
             s3_dst = self.__upload_function_code(rule_name, rule_params, account_id, my_session, code_bucket_name)
@@ -1304,11 +1308,11 @@ class rdk:
             #create CFN Parameters for Custom Rules
             lambdaRoleArn = ""
             if self.args.lambda_role_arn:
-                print (f"[{self.args.region}]: Existing IAM Role provided: " + self.args.lambda_role_arn)
+                print (f"[{my_session.region_name}]: Existing IAM Role provided: " + self.args.lambda_role_arn)
                 lambdaRoleArn = self.args.lambda_role_arn
 
             if self.args.boundary_policy_arn:
-                print (f"[{self.args.region}]: Boundary Policy provided: " + self.args.boundary_policy_arn)
+                print (f"[{my_session.region_name}]: Boundary Policy provided: " + self.args.boundary_policy_arn)
                 boundaryPolicyArn = self.args.boundary_policy_arn
             else:
                 boundaryPolicyArn = ""
@@ -1411,7 +1415,7 @@ class rdk:
                     remediation['Properties']['TargetId'] = {"Ref" : self.__get_alphanumeric_rule_name(rule_name+"RemediationAction") }
 
             if "SSMAutomation" in rule_params:
-                print(f'[{self.args.region}]: Building SSM Automation Section')
+                print(f'[{my_session.region_name}]: Building SSM Automation Section')
 
                 ssm_automation = self.__create_automation_cloudformation_block(rule_params['SSMAutomation'], rule_name)
                 json_body["Resources"][self.__get_alphanumeric_rule_name(rule_name+"RemediationAction")] = ssm_automation
@@ -1452,19 +1456,19 @@ class rdk:
 
                         if 'No updates are to be performed.' in str(e):
                             #No changes made to Config rule definition, so CloudFormation won't do anything.
-                            print(f"[{self.args.region}]: No changes to Config Rule.")
+                            print(f"[{my_session.region_name}]: No changes to Config Rule.")
                         else:
                             #Something unexpected has gone wrong.  Emit an error and bail.
-                            print(f'[{self.args.region}]: Validation Error on CFN')
-                            print(f'[{self.args.region}]:' + json.dumps(cfn_args))
-                            print(f'[{self.args.region}]: {e}')
+                            print(f'[{my_session.region_name}]: Validation Error on CFN')
+                            print(f'[{my_session.region_name}]: ' + json.dumps(cfn_args))
+                            print(f'[{my_session.region_name}]: {e}')
                             return 1
                     else:
                         raise
 
                 my_lambda_arn = self.__get_lambda_arn_for_stack(my_stack_name)
 
-                print(f"[{self.args.region}]: Publishing Lambda code...")
+                print(f"[{my_session.region_name}]: Publishing Lambda code...")
                 my_lambda_client = my_session.client('lambda')
                 my_lambda_client.update_function_code(
                     FunctionName=my_lambda_arn,
@@ -1472,10 +1476,10 @@ class rdk:
                     S3Key=s3_dst,
                     Publish=True
                 )
-                print(f"[{self.args.region}]: Lambda code updated.")
+                print(f"[{my_session.region_name}]: Lambda code updated.")
             except ClientError as e:
                 #If we're in the exception, the stack does not exist and we should create it.
-                print (f"[{self.args.region}]: Creating CloudFormation Stack for " + rule_name)
+                print (f"[{my_session.region_name}]: Creating CloudFormation Stack for " + rule_name)
                 cfn_args = {
                     'StackName': my_stack_name,
                     'TemplateBody': json.dumps(json_body,indent=2),
@@ -1495,7 +1499,7 @@ class rdk:
             if cfn_tags is not None and len(cfn_tags) > 0:
                 self.__tag_config_rule(rule_name, cfn_tags, my_session)
 
-        print(f'[{self.args.region}]: Config deploy complete.')
+        print(f'[{my_session.region_name}]: Config deploy complete.')
 
         return 0
 
@@ -2673,6 +2677,7 @@ class rdk:
         parameters_file.close()
 
     def __wait_for_cfn_stack(self, cfn_client, stackname):
+        my_session = self.__get_boto_session()
         in_progress = True
         while in_progress:
             my_stacks = []
@@ -2693,24 +2698,24 @@ class rdk:
             #If all stacks have been deleted, clearly we're done!
             if all_deleted:
                 in_progress = False
-                print(f"[{self.args.region}]: CloudFormation stack operation complete.")
+                print(f"[{my_session.region_name}]: CloudFormation stack operation complete.")
                 continue
             else:
                 if 'FAILED' in active_stack['StackStatus']:
                     in_progress = False
-                    print(f"[{self.args.region}]: CloudFormation stack operation Failed for " + stackname +".")
+                    print(f"[{my_session.region_name}]: CloudFormation stack operation Failed for " + stackname +".")
                     if 'StackStatusReason' in active_stack:
-                        print(f"[{self.args.region}]: Reason: " + active_stack['StackStatusReason'])
+                        print(f"[{my_session.region_name}]: Reason: " + active_stack['StackStatusReason'])
                 elif active_stack['StackStatus'] == 'ROLLBACK_COMPLETE':
                     in_progress = False
-                    print(f"[{self.args.region}]: CloudFormation stack operation Rolled Back for " + stackname +".")
+                    print(f"[{my_session.region_name}]: CloudFormation stack operation Rolled Back for " + stackname +".")
                     if 'StackStatusReason' in active_stack:
-                        print(f"[{self.args.region}]: Reason: " + active_stack['StackStatusReason'])
+                        print(f"[{my_session.region_name}]: Reason: " + active_stack['StackStatusReason'])
                 elif 'COMPLETE' in active_stack['StackStatus']:
                     in_progress = False
-                    print(f"[{self.args.region}]: CloudFormation stack operation complete.")
+                    print(f"[{my_session.region_name}]: CloudFormation stack operation complete.")
                 else:
-                    print(f"[{self.args.region}]: Waiting for CloudFormation stack operation to complete...")
+                    print(f"[{my_session.region_name}]: Waiting for CloudFormation stack operation to complete...")
                     time.sleep(5)
 
     def __get_handler(self, rule_name, params):
@@ -2772,7 +2777,7 @@ class rdk:
                 my_lambda_arn = output['OutputValue']
 
         if my_lambda_arn == 'NOTFOUND':
-            print(f"[{self.args.region}]: Could not read CloudFormation stack output to find Lambda function.")
+            print(f"[{my_session.region_name}]: Could not read CloudFormation stack output to find Lambda function.")
             sys.exit(1)
 
         return my_lambda_arn
@@ -2803,7 +2808,7 @@ class rdk:
     def __upload_function_code(self, rule_name, params, account_id, session, code_bucket_name):
         if params['SourceRuntime'] == "java8":
             #Do java build and package.
-            print ("Running Gradle Build for "+rule_name)
+            print (f"[{session.region_name}]: Running Gradle Build for "+rule_name)
             working_dir = os.path.join(os.getcwd(), rules_dir, rule_name)
             command = ["gradle","build"]
             subprocess.call( command, cwd=working_dir)
@@ -2837,7 +2842,7 @@ class rdk:
             self.__delete_package_file(tmp_src)
 
         else:
-            print ("Zipping " + rule_name)
+            print (f"[{session.region_name}]: Zipping " + rule_name)
             # Remove old zip file if it already exists
             package_file_dst = os.path.join(rule_name, rule_name+".zip")
             self.__delete_package_file(package_file_dst)
@@ -2853,9 +2858,9 @@ class rdk:
 
         my_s3 = session.resource('s3')
 
-        print ("Uploading " + rule_name)
+        print (f"[{session.region_name}]: Uploading " + rule_name)
         my_s3.meta.client.upload_file(s3_src, code_bucket_name, s3_dst)
-        print ("Upload complete.")
+        print (f"[{session.region_name}]: Upload complete.")
 
         return s3_dst
 
@@ -3122,7 +3127,7 @@ class rdk:
                 if args.generated_lambda_layer:
                     lambda_layer_version = self.__get_existing_lambda_layer(session)
                     if not lambda_layer_version:
-                        print(f"--generated-lambda-layer flag received, but rdklib-layer not found in {session.region_name}. Creating one now")
+                        print(f"{session.region_name} --generated-lambda-layer flag received, but rdklib-layer not found in {session.region_name}. Creating one now")
                         lambda_layer_version = self.__create_new_lambda_layer(session)
                     layers.append(lambda_layer_version)
                 elif args.rdklib_layer_arn:
@@ -3134,8 +3139,9 @@ class rdk:
         return layers
 
     def __get_existing_lambda_layer(self, session):
+        region = session.region_name
         lambda_client = session.client("lambda")
-        print("Checking for Existing RDK Layer")
+        print(f"[{region}]: Checking for Existing RDK Layer")
         response = lambda_client.list_layer_versions(LayerName="rdklib-layer")
         if response["LayerVersions"]:
             return response['LayerVersions'][0]['LayerVersionArn']
@@ -3143,12 +3149,12 @@ class rdk:
             return None
 
     def __create_new_lambda_layer(self, session):
-        print("Creating new rdklib-layer")
-        folder_name = "lib" + str(uuid.uuid4())
-        shell_command = "pip3 install --target ./python boto3 botocore rdk rdklib"
         region = session.region_name
+        print(f"[{region}]: Creating new rdklib-layer")
+        folder_name = "lib" + str(uuid.uuid4())
+        shell_command = f"pip3 install --target python boto3 botocore rdk rdklib"
 
-        print(f"Installing Packages to {folder_name}/python")
+        print(f"[{region}]: Installing Packages to {folder_name}/python")
         try:
             os.makedirs(folder_name + "/python")
         except FileExistsError as e:
@@ -3157,14 +3163,13 @@ class rdk:
         os.chdir(folder_name)
         ret = subprocess.run(shell_command, capture_output=True, shell=True)
 
-        print("Creating rdk_lib_layer.zip")
-        shutil.make_archive("rdk_lib_layer", "zip", "python")
+        print(f"[{region}]: Creating rdk_lib_layer.zip")
+        shutil.make_archive(f"rdk_lib_layer", "zip", f"python")
         os.chdir("..")
-
         s3_client = session.client('s3')
         s3_resource = session.resource('s3')
 
-        print("Creating temporary S3 Bucket")
+        print(f"[{region}]: Creating temporary S3 Bucket")
         bucket_name = "rdkliblayertemp" + str(uuid.uuid4())
         if region != "us-east-1":
             s3_client.create_bucket(
@@ -3173,21 +3178,21 @@ class rdk:
         if region == "us-east-1":
             s3_client.create_bucket(Bucket=bucket_name)
 
-        print("Uploading rdk_lib_layer.zip to S3")
+        print(f"[{region}]: Uploading rdk_lib_layer.zip to S3")
         s3_resource.Bucket(bucket_name).upload_file(
             f"{folder_name}/rdk_lib_layer.zip", "rdklib-layer"
         )
 
         lambda_client = session.client("lambda")
 
-        print("Publishing Lambda Layer")
+        print(f"[{region}]: Publishing Lambda Layer")
         lambda_client.publish_layer_version(
             LayerName="rdklib-layer",
             Content={"S3Bucket": bucket_name, "S3Key": "rdklib-layer"},
             CompatibleRuntimes=["python3.6", "python3.7", "python3.8"],
         )
 
-        print("Deleting temporary S3 Bucket")
+        print(f"[{region}]: Deleting temporary S3 Bucket")
         try:
             bucket = s3_resource.Bucket(bucket_name)
             bucket.objects.all().delete()
@@ -3195,7 +3200,7 @@ class rdk:
         except Exception as e:
             print(e)
 
-        print("Cleaning up temp_folder")
+        print(f"[{region}]: Cleaning up temp_folder")
         shutil.rmtree(f"./{folder_name}")
 class TestCI():
     def __init__(self, ci_type):
