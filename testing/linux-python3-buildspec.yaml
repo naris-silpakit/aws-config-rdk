@@ -18,6 +18,7 @@ phases:
       - rdk create LP3_TestRule_P37_lib --runtime python3.7-lib --resource-types AWS::EC2::SecurityGroup
       - rdk create LP3_TestRule_P36_lib --runtime python3.6-lib --resource-types AWS::EC2::SecurityGroup
       - rdk -f test-region.yaml deploy LP3_TestRule_P38_lib --generated-lambda-layer
+      - ls
       - rdk -f test-region.yaml deploy LP3_TestRule_P37_lib --generated-lambda-layer
       - rdk -f test-region.yaml deploy --region-set test-commercial LP3_TestRule_P36_lib --generated-lambda-layer
       - python3 testing/check_generated_lambda_layers_test.py
