@@ -4,10 +4,10 @@ import sys
 
 import boto3
 
-cwd = os.getcwd()
-test_dir = os.path.join(cwd, "multi_region_test")
-os.mkdir(test_dir)
-os.chdir(test_dir)
+# cwd = os.getcwd()
+# test_dir = os.path.join(cwd, "multi_region_test")
+# os.mkdir(test_dir)
+# os.chdir(test_dir)
 test_file_name = "test-region.yaml"
 # create region file
 test_file = """
@@ -28,7 +28,7 @@ init_command = f"rdk -f {test_file_name} init"
 init_return_code = os.system(init_command)
 
 if init_return_code != 0:
-    os.chdir(cwd)
+    # os.chdir(cwd)
     sys.exit(1)
 
 # rdk create MFA_ENABLED_RULE --runtime python3.7 --resource-types AWS::IAM::User
@@ -36,7 +36,7 @@ print("Multi-region test: creating rule to test...")
 create_return_code = os.system("rdk create MFA_ENABLED_RULE --runtime python3.8 --resource-types AWS::IAM::User")
 
 if create_return_code != 0:
-    os.chdir(cwd)
+    # os.chdir(cwd)
     sys.exit(1)
 
 # run rdk deploy in test-commercial
@@ -47,17 +47,17 @@ deploy_return_code = os.system(deploy_command)
 cfn_client_ap_east = boto3.client('cloudformation', region_name='ap-east-1')
 stack_status_ap_east = cfn_client_ap_east.describe_stacks(StackName='MFAENABLEDRULE')
 if stack_status_ap_east["Stacks"][0]["StackStatus"] != "CREATE_COMPLETE":
-    os.chdir(cwd)
+    # os.chdir(cwd)
     sys.exit(1)
 
 cfn_client_us_west = boto3.client('cloudformation', region_name='us-west-1')
 stack_status_us_west = cfn_client_us_west.describe_stacks(StackName='MFAENABLEDRULE')
 if stack_status_us_west["Stacks"][0]["StackStatus"] != "CREATE_COMPLETE":
-    os.chdir(cwd)
+    # os.chdir(cwd)
     sys.exit(1)
 
 if deploy_return_code != 0:
-    os.chdir(cwd)
+    # os.chdir(cwd)
     sys.exit(1)
 
 # rdk undeploy in test-commercial
@@ -66,6 +66,6 @@ undeploy_command = f"rdk -f {test_file_name} --region-set test-commercial undepl
 undeploy_return_code = os.system(undeploy_command)
 
 if undeploy_return_code != 0:
-    os.chdir(cwd)
+    # os.chdir(cwd)
     sys.exit(1)
-os.chdir(cwd)
+# os.chdir(cwd)
