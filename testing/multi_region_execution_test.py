@@ -14,6 +14,7 @@ test_file = """
 default:
   - ap-east-1
   - us-west-2
+  - us-east-2
 test-commercial:
   - ap-east-1
   - us-west-1

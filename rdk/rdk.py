@@ -1388,6 +1388,7 @@ class rdk:
                     'ParameterValue': ",".join(layers)
                 })
 
+
             if self.args.lambda_security_groups and self.args.lambda_subnets:
                 my_params.append({
                     'ParameterKey': 'SecurityGroupIds',
@@ -3128,7 +3129,8 @@ class rdk:
                     lambda_layer_version = self.__get_existing_lambda_layer(session)
                     if not lambda_layer_version:
                         print(f"{session.region_name} --generated-lambda-layer flag received, but rdklib-layer not found in {session.region_name}. Creating one now")
-                        lambda_layer_version = self.__create_new_lambda_layer(session)
+                        self.__create_new_lambda_layer(session)
+                        lambda_layer_version = self.__get_existing_lambda_layer(session)
                     layers.append(lambda_layer_version)
                 elif args.rdklib_layer_arn:
                     layers.append(args.rdklib_layer_arn)

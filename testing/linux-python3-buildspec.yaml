@@ -14,6 +14,7 @@ phases:
       - python3 testing/multi_region_execution_test.py
       - python3 testing/partition_test.py
       - rdk init --generate-lambda-layer
+      - rdk -f test-region.yaml --region-set test-commercial init --generate-lambda-layer
       - rdk create LP3_TestRule_P38_lib --runtime python3.8-lib --resource-types AWS::EC2::SecurityGroup
       - rdk create LP3_TestRule_P37_lib --runtime python3.7-lib --resource-types AWS::EC2::SecurityGroup
       - rdk create LP3_TestRule_P36_lib --runtime python3.6-lib --resource-types AWS::EC2::SecurityGroup
