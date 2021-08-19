@@ -18,6 +18,7 @@ default:
 test-commercial:
   - ap-east-1
   - us-west-1
+  - us-west-2
 """
 
 with open(test_file_name, "w+") as f:
