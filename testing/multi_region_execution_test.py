@@ -5,20 +5,6 @@ import sys
 import boto3
 
 test_file_name = "test-region.yaml"
-# create region file
-test_file = """
-default:
-  - ap-east-1
-  - us-west-2
-  - us-east-2
-test-commercial:
-  - ap-east-1
-  - us-west-1
-  - us-west-2
-"""
-
-with open(test_file_name, "w+") as f:
-    f.write(test_file)
 
 # run rdk init in default region
 print("Multi-region test: running init...")

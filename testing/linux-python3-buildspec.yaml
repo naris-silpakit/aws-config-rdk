@@ -11,6 +11,7 @@ phases:
       - echo Starting tests
   build:
     commands:
+      - rdk create-region-set -o test-region.yaml
       - python3 testing/multi_region_execution_test.py
       - python3 testing/partition_test.py
       - rdk init --generate-lambda-layer

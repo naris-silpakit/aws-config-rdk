@@ -227,7 +227,7 @@ def get_command_parser():
     parser.add_argument('--region-set', help="[optional] Set of regions within the region file with which to run the command in parallel. Looks for a 'default' region set if not specified.")
     #parser.add_argument('--verbose','-v', action='count')
     #Removed for now from command choices: 'test-remote', 'status'
-    parser.add_argument('command', metavar='<command>', help='Command to run.  Refer to the usage instructions for each command for more details', choices=['clean', 'create', 'create-rule-template', 'deploy', 'deploy-organization', 'init', 'logs', 'modify', 'rulesets', 'sample-ci', 'test-local', 'undeploy', 'undeploy-organization', 'export'])
+    parser.add_argument('command', metavar='<command>', help='Command to run.  Refer to the usage instructions for each command for more details', choices=['clean', 'create', 'create-rule-template', 'deploy', 'deploy-organization', 'init', 'logs', 'modify', 'rulesets', 'sample-ci', 'test-local', 'undeploy', 'undeploy-organization', 'export', 'create-region-set'])
     parser.add_argument('command_args', metavar='<command arguments>', nargs=argparse.REMAINDER, help="Run `rdk <command> --help` to see command-specific arguments.")
     parser.add_argument('-v','--version', help='Display the version of this tool', action="version", version='%(prog)s '+MY_VERSION)
 
@@ -442,6 +442,14 @@ def get_create_rule_template_parser():
     parser.add_argument('-t','--tag-config-rules-script', required=False, help="filename of generated script to tag config rules with the tags in each parameter.json")
     parser.add_argument('--config-role-arn', required=False, help="[optional] Assign existing iam role as config role. If omitted, \"config-role\" will be created.")
     parser.add_argument('--rules-only', action="store_true", help="[optional] Generate a CloudFormation Template that only includes the Config Rules and not the Bucket, Configuration Recorder, and Delivery Channel.")
+    return parser
+
+def get_create_region_set_parser():
+    parser = argparse.ArgumentParser(
+        prog='rdk create-region-set',
+        description="Outputs a YAML region set file for multi-region deployment."
+    )
+    parser.add_argument('-o','--output-file', required=False, default="regions", help="Filename of the generated regionset file")
     return parser
 
 def parse_region_file(args):
@@ -2492,6 +2500,14 @@ class rdk:
                 print("=========SCRIPT=========")
                 print(script_for_tag)
                 print("you can use flag [--tag-config-rules-script <file path> ] to output the script")
+
+    def create_region_set(self):
+        print("Will it work?")
+        self.args = get_create_region_set_parser().parse_args(self.args.command_args, self.args)
+        output_file = self.args.output_file
+        output_dict = {"default":["us-east-1","eu-north-1","ap-east-1"],"aws-cn-region-set":["cn-north-1","cn-northwest-1"]}
+        with open(f"{output_file}.yaml","w+") as file:
+            yaml.dump(output_dict, file, default_flow_style = False)
 
     def __generate_terraform_shell(self, args):
         return ""
