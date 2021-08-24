@@ -23,7 +23,7 @@ if create_return_code != 0:
 
 # run rdk deploy in test-commercial
 print("Multi-region test: trying deploy...")
-deploy_command = f"rdk -f {test_file_name} --region-set test-commercial deploy MFA_ENABLED_RULE"
+deploy_command = f"rdk -f {test_file_name} deploy MFA_ENABLED_RULE"
 deploy_return_code = os.system(deploy_command)
 
 cfn_client_ap_east = boto3.client('cloudformation', region_name='ap-east-1')
@@ -41,7 +41,7 @@ if deploy_return_code != 0:
 
 # rdk undeploy in test-commercial
 print("Multi-region test: trying undeploy...")
-undeploy_command = f"rdk -f {test_file_name} --region-set test-commercial undeploy --force MFA_ENABLED_RULE"
+undeploy_command = f"rdk -f {test_file_name} undeploy --force MFA_ENABLED_RULE"
 undeploy_return_code = os.system(undeploy_command)
 
 if undeploy_return_code != 0:

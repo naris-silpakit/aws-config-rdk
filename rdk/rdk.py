@@ -2502,7 +2502,6 @@ class rdk:
                 print("you can use flag [--tag-config-rules-script <file path> ] to output the script")
 
     def create_region_set(self):
-        print("Will it work?")
         self.args = get_create_region_set_parser().parse_args(self.args.command_args, self.args)
         output_file = self.args.output_file
         output_dict = {"default":["us-east-1","us-west-1","eu-north-1","ap-east-1"],"aws-cn-region-set":["cn-north-1","cn-northwest-1"]}
