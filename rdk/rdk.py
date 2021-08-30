@@ -1519,7 +1519,7 @@ class rdk:
                     json_body["Resources"][self.__get_alphanumeric_rule_name(rule_name+'Policy')] = ssm_iam_policy
 
             #debugging
-            print(json.dumps(json_body, indent=2))
+            # print(json.dumps(json_body, indent=2))
 
             #deploy config rule
             my_cfn = my_session.client('cloudformation')
