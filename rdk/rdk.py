@@ -1519,7 +1519,7 @@ class rdk:
                     json_body["Resources"][self.__get_alphanumeric_rule_name(rule_name+'Policy')] = ssm_iam_policy
 
             #debugging
-            #print(json.dumps(json_body, indent=2))
+            print(json.dumps(json_body, indent=2))
 
             #deploy config rule
             my_cfn = my_session.client('cloudformation')
@@ -1549,9 +1549,9 @@ class rdk:
                             print(f"[{my_session.region_name}]: No changes to Config Rule.")
                         else:
                             #Something unexpected has gone wrong.  Emit an error and bail.
-                            print(f'[{my_session.region_name}]: Validation Error on CFN')
-                            print(f'[{my_session.region_name}]: ' + json.dumps(cfn_args))
-                            print(f'[{my_session.region_name}]: {e}')
+                            print(f'[{my_session.region_name}]: Validation Error on CFN\n')
+                            print(f'[{my_session.region_name}]: ' + json.dumps(cfn_args)+ "\n")
+                            print(f'[{my_session.region_name}]: {e}\n')
                             return 1
                     else:
                         raise
@@ -3313,17 +3313,17 @@ class rdk:
         else:
             print (f"[{session.region_name}]: Zipping " + rule_name)
             # Remove old zip file if it already exists
-            package_file_dst = os.path.join(rule_name, rule_name+".zip")
+            package_file_dst = os.path.join(rule_name, rule_name+session.region_name+".zip")
             self.__delete_package_file(package_file_dst)
 
             #zip rule code files and upload to s3 bucket
             s3_src_dir = os.path.join(os.getcwd(), rules_dir, rule_name)
-            tmp_src = shutil.make_archive(os.path.join(tempfile.gettempdir(), rule_name), 'zip', s3_src_dir)
+            tmp_src = shutil.make_archive(os.path.join(tempfile.gettempdir(), rule_name+session.region_name), 'zip', s3_src_dir)
             shutil.copy(tmp_src, package_file_dst)
             s3_src = os.path.abspath(package_file_dst)
             self.__delete_package_file(tmp_src)
 
-        s3_dst = "/".join((rule_name, rule_name+".zip"))
+        s3_dst = "/".join((rule_name, rule_name+session.region_name+".zip"))
 
         my_s3 = session.resource('s3')
 
