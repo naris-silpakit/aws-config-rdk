@@ -3283,7 +3283,7 @@ class rdk:
             subprocess.call( command, cwd=working_dir)
 
             #set source as distribution zip
-            s3_src = os.path.join(os.getcwd(), rules_dir, rule_name, 'build', 'distributions', rule_name+".zip")
+            s3_src = os.path.join(os.getcwd(), rules_dir, rule_name, 'build', 'distributions', rule_name+session.region_name+".zip")
         elif params['SourceRuntime'] in ["dotnetcore1.0","dotnetcore2.0"]:
             print ("Packaging "+rule_name)
             working_dir = os.path.join(os.getcwd(), rules_dir, rule_name)
