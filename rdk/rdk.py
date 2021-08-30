@@ -3068,7 +3068,7 @@ class rdk:
             'Description': self.args.rulename,
             'SourceRuntime': self.args.runtime,
             #'CodeBucket': code_bucket_prefix + account_id,
-            'CodeKey': self.args.rulename+'.zip',
+            'CodeKey': self.args.rulename+my_session.region_name+'.zip',
             'InputParameters': json.dumps(my_input_params),
             'OptionalParameters': json.dumps(my_optional_params)
         }
