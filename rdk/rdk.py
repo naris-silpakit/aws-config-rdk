@@ -3299,7 +3299,7 @@ class rdk:
                 subprocess.call( command, cwd=working_dir)
 
             # Remove old zip file if it already exists
-            package_file_dst = os.path.join(rule_name, rule_name+".zip")
+            package_file_dst = os.path.join(rule_name, rule_name+session.region_name+".zip")
             self.__delete_package_file(package_file_dst)
 
             # Create new package in temp directory, copy to rule directory
