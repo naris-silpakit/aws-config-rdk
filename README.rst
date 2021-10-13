@@ -67,7 +67,7 @@ Running ``init`` subsequent times will validate your AWS Config setup and re-cre
 
 - If you want rdk to create/update and upload the rdklib-layer for you, then use **--generate-lambda-layer** argument:::
 
-  $ rdk init --skip-code-bucket-creation
+  $ rdk init --generate-lambda-layer
 
 Create Rules
 ------------
