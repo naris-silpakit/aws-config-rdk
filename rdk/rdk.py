@@ -3662,7 +3662,6 @@ class rdk:
                 print(f"[{session.region_name}]: Custom name layer not supported with Serverless Application Repository deployment, attempting manual deployment")
             self.__create_new_lambda_layer_locally(session, layer_name)
 
-
     def __create_new_lambda_layer_serverless_repo(self, session):
         try:
             cfn_client = session.client("cloudformation")
