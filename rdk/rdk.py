@@ -326,6 +326,7 @@ def get_deployment_parser(ForceArgument=False, Command="deploy"):
     parser.add_argument('--custom-code-bucket', required=False, help="[optional] Provide the custom code S3 bucket name, which is not created with rdk init, for generated cloudformation template storage.")
     parser.add_argument('--rdklib-layer-arn', required=False, help="[optional] Lambda Layer ARN that contains the desired rdklib.  Note that Lambda Layers are region-specific.")
     parser.add_argument('--lambda-role-arn', required=False, help="[optional] Assign existing iam role to lambda functions. If omitted, \"rdkLambdaRole\" will be created.")
+    parser.add_argument('--lambda-role-name', required=False, help="[optional] Assign existing iam role to lambda functions. If added, will look for a lambda role in the current account with the given name")
     parser.add_argument('--lambda-layers', required=False, help="[optional] Comma-separated list of Lambda Layer ARNs to deploy with your Lambda function(s).")
     parser.add_argument('--lambda-subnets', required=False, help="[optional] Comma-separated list of Subnets to deploy your Lambda function(s).")
     parser.add_argument('--lambda-security-groups', required=False, help="[optional] Comma-separated list of Security Groups to deploy with your Lambda function(s).")
@@ -355,6 +356,7 @@ def get_deployment_organization_parser(ForceArgument=False, Command="deploy-orga
     parser.add_argument('--custom-code-bucket', required=False, help="[optional] Provide the custom code S3 bucket name, which is not created with rdk init, for generated cloudformation template storage.")
     parser.add_argument('--rdklib-layer-arn', required=False, help="[optional] Lambda Layer ARN that contains the desired rdklib.  Note that Lambda Layers are region-specific.")
     parser.add_argument('--lambda-role-arn', required=False, help="[optional] Assign existing iam role to lambda functions. If omitted, \"rdkLambdaRole\" will be created.")
+    parser.add_argument('--lambda-role-name', required=False, help="[optional] Assign existing iam role to lambda functions. If added, will look for a lambda role in the current account with the given name")
     parser.add_argument('--lambda-layers', required=False, help="[optional] Comma-separated list of Lambda Layer ARNs to deploy with your Lambda function(s).")
     parser.add_argument('--lambda-subnets', required=False, help="[optional] Comma-separated list of Subnets to deploy your Lambda function(s).")
     parser.add_argument('--lambda-security-groups', required=False, help="[optional] Comma-separated list of Security Groups to deploy with your Lambda function(s).")
@@ -380,6 +382,7 @@ def get_export_parser(ForceArgument=False, Command="export"):
     parser.add_argument('--lambda-timeout', required=False, default=60, help="[optional] Timeout (in seconds) for the lambda function", type=str)
     parser.add_argument('--lambda-role-arn', required=False,
                         help="[optional] Assign existing iam role to lambda functions. If omitted, new lambda role will be created.")
+    parser.add_argument('--lambda-role-name', required=False, help="[optional] Assign existing iam role to lambda functions. If added, will look for a lambda role in the current account with the given name")
     parser.add_argument('--rdklib-layer-arn', required=False,
                         help="[optional] Lambda Layer ARN that contains the desired rdklib.  Note that Lambda Layers are region-specific.")
     parser.add_argument('-v', '--version', required=True, help='Terraform version', choices=['0.11', '0.12'])
