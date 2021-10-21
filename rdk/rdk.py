@@ -1409,6 +1409,10 @@ class rdk:
             if self.args.lambda_role_arn:
                 print (f"[{my_session.region_name}]: Existing IAM Role provided: " + self.args.lambda_role_arn)
                 lambdaRoleArn = self.args.lambda_role_arn
+            elif self.args.lambda_role_name:
+                print (f"[{my_session.region_name}]: Finding IAM Role: " + self.args.lambda_role_name)
+                arn = f"arn:{partition}:iam::{account_id}:role/Rdk-Lambda-Role"
+                lambdaRoleArn = arn
 
             if self.args.boundary_policy_arn:
                 print (f"[{my_session.region_name}]: Boundary Policy provided: " + self.args.boundary_policy_arn)
@@ -1761,6 +1765,11 @@ class rdk:
             if self.args.lambda_role_arn:
                 print ("Existing IAM Role provided: " + self.args.lambda_role_arn)
                 lambdaRoleArn = self.args.lambda_role_arn
+            elif self.args.lambda_role_name:
+                print (f"[{my_session.region_name}]: Finding IAM Role: " + self.args.lambda_role_name)
+                arn = f"arn:{partition}:iam::{account_id}:role/Rdk-Lambda-Role"
+                lambdaRoleArn = arn
+
 
             if self.args.boundary_policy_arn:
                 print ("Boundary Policy provided: " + self.args.boundary_policy_arn)
@@ -3459,7 +3468,7 @@ class rdk:
 
         resources = {}
 
-        if self.args.lambda_role_arn:
+        if self.args.lambda_role_arn or self.args.lambda_role_name:
             print ("Existing IAM role provided: " + self.args.lambda_role_arn)
         else:
             print ("No IAM role provided, creating a new IAM role for lambda function")
@@ -3563,7 +3572,7 @@ class rdk:
             properties["Description"] = "Function for AWS Config Rule " + rule_name
             properties["Handler"] = self.__get_handler(rule_name, params)
             properties["MemorySize"] = "256"
-            if self.args.lambda_role_arn:
+            if self.args.lambda_role_arn or self.args.lambda_role_name:
                 properties["Role"] = self.args.lambda_role_arn
             else:
                 lambda_function["DependsOn"] = "rdkLambdaRole"
